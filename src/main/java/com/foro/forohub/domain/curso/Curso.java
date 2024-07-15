@@ -21,9 +21,14 @@ public class Curso {
     private String nombre;
     private String categoria;
 
-    public Curso(DatosCurso datosCurso){
-        this.nombre = datosCurso.nombre();
-        this.categoria = datosCurso.categoria();
+//    public Curso(DatosCurso datosCurso){
+//        this.nombre = datosCurso.nombre();
+//        this.categoria = datosCurso.categoria();
+//    }
+
+    public Curso(String nombre, String categoria) {
+        this.nombre = nombre;
+        this.categoria = categoria;
     }
 
     public Long getId() {

@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TopicoRepository extends JpaRepository<Topico, Long> {
 
     Page<Topico> findByStatusTrue(Pageable paginacion);
+    boolean existsByTitulo(String titulo);
 }
