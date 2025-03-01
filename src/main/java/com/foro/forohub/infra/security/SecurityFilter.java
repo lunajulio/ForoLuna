@@ -5,38 +5,53 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.IOException;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private TokenService tokenService;
+    private final TokenService tokenService;
+    private final UsuarioRepository repository;
 
-    @Autowired
-    private UsuarioRepository repository;
+    public SecurityFilter(TokenService tokenService, UsuarioRepository repository) {
+        this.tokenService = tokenService;
+        this.repository = repository;
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         var tokenJWT = recuperarToken(request);
 
         if (tokenJWT != null) {
             try {
                 var subject = tokenService.getSubject(tokenJWT);
-                var usuario = repository.findByLogin(subject);
+                Optional<UserDetails> usuarioOptional = repository.findByLogin(subject);
 
-                if (usuario != null) {
-                    var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+                if (usuarioOptional.isPresent()) {
+                    UserDetails userDetails = usuarioOptional.get();
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    // Log de éxito
+                    System.out.println("✅ Usuario autenticado exitosamente: " + userDetails.getUsername());
+                    System.out.println("🔑 Roles: " + userDetails.getAuthorities());
+
                 }
             } catch (RuntimeException ex) {
-                // Aquí puedes agregar un registro para los errores de token
                 System.err.println("Error de autenticación: " + ex.getMessage());
             }
         }
@@ -47,9 +62,8 @@ public class SecurityFilter extends OncePerRequestFilter {
     private String recuperarToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            return authorizationHeader.replace("Bearer ", "");
+            return authorizationHeader.substring(7);
         }
         return null;
     }
 }
-

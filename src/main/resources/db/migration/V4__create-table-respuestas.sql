@@ -1,5 +1,5 @@
 CREATE TABLE respuestas (
-    id BIGSERIAL NOT NULL,
+    id BIGINT NOT NULL AUTO_INCREMENT,
     mensaje TEXT NOT NULL,
     topico_id BIGINT NOT NULL,
     fecha_creacion TIMESTAMP NOT NULL,

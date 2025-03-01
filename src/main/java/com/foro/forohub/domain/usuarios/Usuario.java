@@ -15,9 +15,10 @@ import java.util.List;
 @Entity(name = "Usuario")
 @Table(name= "usuarios")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor // Crea un constructor sin argumentos (obligatorio para JPA)
+@AllArgsConstructor // Crea un constructor con todos los atributos
 @EqualsAndHashCode(of = "id")
+
 public class Usuario implements UserDetails {
 
     @Id
@@ -27,6 +28,11 @@ public class Usuario implements UserDetails {
     private String login;
     private String clave;
 
+    public Usuario(DatosRegistroUsuario datosRegistroUsuario) {
+        this.nombre = datosRegistroUsuario.nombre();
+        this.login = datosRegistroUsuario.login();
+        this.clave = datosRegistroUsuario.clave();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -35,6 +41,10 @@ public class Usuario implements UserDetails {
 
     public String getNombre() {
         return nombre;
+    }
+
+    public String getLogin() {
+        return login;
     }
 
     public void setNombre(String nombre) {
@@ -47,6 +57,10 @@ public class Usuario implements UserDetails {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setPass(String pass) {
+        this.clave = pass;
     }
 
     @Override
@@ -78,4 +92,5 @@ public class Usuario implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }
