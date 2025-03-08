@@ -88,6 +88,7 @@ const LoginForm = () => {
           
           <button 
             type="submit"
+            onClick={() => router.push('/topico')}
             disabled={isLoading}
             className={`w-full bg-purple-950 text-white py-3 rounded-md 
                       ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-900'}`}

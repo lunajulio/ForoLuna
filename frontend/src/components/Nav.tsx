@@ -9,7 +9,6 @@ const Nav = () => {
           {/* Logo y nombre */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              {/* Aquí puedes poner tu logo */}
               <span className="text-orange-500 text-2xl"></span>
             </div>
             <div className="ml-2">
