@@ -25,7 +25,7 @@ const LoginForm = () => {
       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
       console.log('Login exitoso');
-      router.push('/'); // o la ruta que desees después del login
+      router.push('/topico'); 
 
     } catch (error: any) {
       console.error('Error de autenticación:', error);
