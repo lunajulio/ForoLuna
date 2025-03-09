@@ -4,12 +4,36 @@ import Link from 'next/link'
 import { IoNotificationsOutline } from 'react-icons/io5'
 import profilePic from '../../public/profile-pic.svg'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { api } from '@/services/api'
 
 const NavMain = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    } else {
+      router.push('/login');
+    }
+  }, [])
+
+  const handleLogout = () => {
+    // Limpiar localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    
+    // Limpiar headers de axios
+    delete api.defaults.headers.common['Authorization'];
+    router.push('/login');
+  };
+
   return (
-    <nav className="bg-black border-b">
+    <nav className="sticky top-0 z-50 backdrop-blur-sm transition-colors bg-black border-b">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-14">
           {/* Logo y nombre */}
@@ -41,6 +65,7 @@ const NavMain = () => {
 
             {/* Avatar del usuario */}
             <div className="flex items-center space-x-2">
+              <span className="text-white">{userName}</span>
               <div className="w-8 h-8 rounded-full overflow-hidden">
                 <Image
                   src= {profilePic}

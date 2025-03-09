@@ -47,13 +47,14 @@ public class Topico {
     )
     private Usuario usuario;
 
-    public Topico(DatosSubirTopico datosSubirTopico, String autor){
+    public Topico(DatosSubirTopico datosSubirTopico, String autor, Usuario usuario){
         this.titulo = datosSubirTopico.titulo();
         this.mensaje = datosSubirTopico.mensaje();
         this.fechaCreacion = datosSubirTopico.fechaCreacion();
         this.status = true;
         this.curso = datosSubirTopico.curso();
         this.autor = autor;
+        this.usuario = usuario;
     }
 
     public void actualizarTopico(DatosActualizarTopico datosActualizarTopico){
@@ -132,6 +133,10 @@ public class Topico {
 
     public void setRespuestas(List<Respuesta> respuestas) {
         this.respuestas = respuestas;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
     }
 
 
