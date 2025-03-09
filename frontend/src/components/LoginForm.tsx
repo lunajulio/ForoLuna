@@ -8,6 +8,7 @@ import { DatosAutenticacionUsuario, DatosTokenJWT } from '../services/auth';
 const LoginForm = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<DatosAutenticacionUsuario>();
   const [isLoading, setIsLoading] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   const [apiError, setApiError] = useState<string>('');
   const router = useRouter();
 
@@ -16,20 +17,40 @@ const LoginForm = () => {
       setIsLoading(true);
       setApiError('');
 
+      console.log('Intentando login con:', data);
+
       const response = await api.post<DatosTokenJWT>('/login', data);
       
-      // Guardar el token en localStorage
-      localStorage.setItem('token', response.data.token);
-      
-      // Configurar el token para futuras peticiones
-      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      console.log('Respuesta del servidor:', response);
+
+      if (response.data && response.data.jwTtoken) {
+        // Guardar datos en localStorage
+        localStorage.setItem('token', response.data.jwTtoken);
+        localStorage.setItem('userName', data.login);
+        setUserName(data.login);
+        
+        // Configurar el token para futuras peticiones
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwTtoken}`;
 
       console.log('Login exitoso');
-      router.push('/topico'); 
+      router.push('/'); // o la ruta que desees después del login
 
     } catch (error: any) {
-      console.error('Error de autenticación:', error);
-      setApiError('Usuario o contraseña incorrectos');
+      console.error('Error completo:', error);
+      
+      if (error.response) {
+        // Error de respuesta del servidor
+        console.error('Error de respuesta:', error.response.data);
+        setApiError(error.response.data.message || 'Error en la autenticación');
+      } else if (error.request) {
+        // Error de conexión
+        console.error('Error de conexión:', error.request);
+        setApiError('Error de conexión con el servidor');
+      } else {
+        // Otros errores
+        console.error('Error:', error.message);
+        setApiError('Error inesperado');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +109,6 @@ const LoginForm = () => {
           
           <button 
             type="submit"
-            onClick={() => router.push('/topico')}
             disabled={isLoading}
             className={`w-full bg-purple-950 text-white py-3 rounded-md 
                       ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-900'}`}

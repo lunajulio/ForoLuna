@@ -1,11 +1,17 @@
+'use client'
 import React from 'react'
 import NavMain from '@/components/NavMain'
 import Sidebar from '../../components/Sidebar'
 import RightSidebar from '../../components/RightSidebar'
 import Questions from '../../components/Questions'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { useRouter } from 'next/navigation'
+
 
 export default function Topico(){
+  const router = useRouter();
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-black">
       <NavMain />
       <div className="max-w-7xl mx-auto px-4 flex">
@@ -25,6 +31,7 @@ export default function Topico(){
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
 

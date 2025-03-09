@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 const Nav = () => {
   return (
-    <nav className="bg-black shadow-sm border-b">
+    <nav className="sticky top-0 z-50 backdrop-blur-sm bg-black shadow-sm border-b transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo y nombre */}
