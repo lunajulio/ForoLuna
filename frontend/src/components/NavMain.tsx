@@ -5,7 +5,7 @@ import { IoNotificationsOutline } from 'react-icons/io5'
 import profilePic from '../../public/profile-pic.svg'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { api } from '@/services/api'
 
 const NavMain = () => {

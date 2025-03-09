@@ -5,8 +5,11 @@ import Sidebar from '../../components/Sidebar'
 import RightSidebar from '../../components/RightSidebar'
 import Questions from '../../components/Questions'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { useRouter } from 'next/navigation'
+
 
 export default function Topico(){
+  const router = useRouter();
   return (
     <ProtectedRoute>
     <div className="min-h-screen bg-black">

@@ -23,14 +23,14 @@ const LoginForm = () => {
       
       console.log('Respuesta del servidor:', response);
 
-      if (response.data && response.data.token) {
+      if (response.data && response.data.jwTtoken) {
         // Guardar datos en localStorage
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.data.jwTtoken);
         localStorage.setItem('userName', data.login);
         setUserName(data.login);
         
         // Configurar el token para futuras peticiones
-        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwTtoken}`;
 
         console.log('Login exitoso, preparando redirección...');
 
