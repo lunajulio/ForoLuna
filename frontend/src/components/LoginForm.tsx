@@ -32,8 +32,22 @@ const LoginForm = () => {
         // Configurar el token para futuras peticiones
         api.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwTtoken}`;
 
-      console.log('Login exitoso');
-      router.push('/'); // o la ruta que desees después del login
+        console.log('Login exitoso, preparando redirección...');
+
+        // Pequeña pausa para asegurar que los datos se guarden
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        try {
+          // Intentar redirección programática
+          await router.push('/topico');
+        } catch (navigationError) {
+          console.error('Error en la navegación programática:', navigationError);
+          // Fallback a redirección tradicional
+          window.location.href = '/topico';
+        }
+      } else {
+        throw new Error('No se recibió token en la respuesta');
+      }
 
     } catch (error: any) {
       console.error('Error completo:', error);

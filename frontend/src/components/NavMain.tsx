@@ -8,7 +8,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/services/api'
 
-const NavMain = () => {
+interface NavMainProps {
+  onAskQuestion: () => void;
+}
+
+const NavMain: React.FC<NavMainProps> = ({ onAskQuestion }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const router = useRouter();
@@ -53,6 +57,7 @@ const NavMain = () => {
           {/* Botones de la derecha */}
           <div className="flex items-center space-x-4">
             <button 
+              onClick={onAskQuestion}
               className="bg-white text-black px-4 py-1.5 rounded-md hover:bg-slate-400 transition-colors text-sm font-medium"
             >
               Ask a question

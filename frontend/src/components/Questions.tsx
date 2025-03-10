@@ -1,17 +1,20 @@
-// components/Questions.tsx
 'use client'
-import { useState } from 'react'
-import Image from 'next/image'
+import { useState, useEffect } from 'react'
+import { api } from '@/services/api'
 import { BsEye } from 'react-icons/bs'
 import { FaRegCommentAlt } from 'react-icons/fa'
 import { GoArrowUp } from 'react-icons/go'
 import { SlOptionsVertical } from 'react-icons/sl'
+import { VscAccount } from "react-icons/vsc";
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
+
+// Interfaces
 interface Comment {
   id: number;
   author: {
     name: string;
-    avatar: string;
     timeAgo: string;
   };
   content: string;
@@ -22,7 +25,6 @@ interface Question {
   id: number;
   author: {
     name: string;
-    avatar: string;
     timeAgo: string;
   };
   title: string;
@@ -36,99 +38,92 @@ interface Question {
   comments: Comment[];
 }
 
+interface TopicFromBackend {
+  id: number;
+  titulo: string;
+  mensaje: string;
+  fechaCreacion: string;
+  autor: string;
+  curso: {
+    nombre: string;
+    categoria: string;
+  };
+  respuestas: Array<{
+    id: number;
+    mensaje: string;
+    fechaCreacion: string;
+    autor: string;
+  }>;
+}
+
 const Questions = () => {
   const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const response = await api.get('/topico');
+      const transformedQuestions = response.data.content.map((topic: TopicFromBackend) => ({
+        id: topic.id,
+        author: {
+          name: topic.autor,
+          timeAgo: formatTimeAgo(topic.fechaCreacion)
+        },
+        title: topic.titulo,
+        content: topic.mensaje,
+        tags: [topic.curso.nombre, topic.curso.categoria],
+        stats: {
+          views: 0,
+          comments: topic.respuestas.length,
+          upvotes: 0
+        },
+        comments: topic.respuestas.map(respuesta => ({
+          id: respuesta.id,
+          author: {
+            name: respuesta.autor,
+            timeAgo: formatTimeAgo(respuesta.fechaCreacion)
+          },
+          content: respuesta.mensaje
+        }))
+      }));
+
+      setQuestions(transformedQuestions);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return formatDistanceToNow(date, { 
+        addSuffix: true,
+        locale: es 
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'fecha desconocida';
+    }
+  };
 
   const toggleComments = (questionId: number) => {
     setExpandedQuestionId(expandedQuestionId === questionId ? null : questionId);
   }
 
-  const questions = [
-    {
-      id: 1,
-      author: {
-        name: 'Golanginya',
-        avatar: '/avatars/golanginya.jpg',
-        timeAgo: '5 min ago'
-      },
-      title: 'How to patch KDE on FreeBSD?',
-      content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Consequat aliquet maecenas ut sit nulla',
-      tags: ['golang', 'linux', 'overflow'],
-      stats: {
-        views: 125,
-        comments: 15,
-        upvotes: 155
-      },
-      comments: [
-        {
-          id: 1,
-          author: {
-            name: '@unkind',
-            avatar: '/avatars/unkind.jpg',
-            timeAgo: '12 November 2020 19:35'
-          },
-          content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          code: 'package main'
-        }
-      ]
-    },
-    {
-      id: 2,
-      author: {
-        name: 'Linuxoid',
-        avatar: '/avatars/linuxoid.jpg',
-        timeAgo: '25 min ago'
-      },
-      title: 'What is a difference between Java nad JavaScript?',
-      content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Bibendum vitae etiam lectus amet enim.',
-      tags: ['java', 'javascript', 'wtf'],
-      stats: {
-        views: 125,
-        comments: 15,
-        upvotes: 155
-      },
-      comments: [
-        {
-          id: 1,
-          author: {
-            name: '@unkind',
-            avatar: '/avatars/unkind.jpg',
-            timeAgo: '12 November 2020 19:35'
-          },
-          content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          code: 'package main'
-        }
-      ]
-    },
-    {
-      id: 3,
-      author: {
-        name: 'Linuxoid',
-        avatar: '/avatars/linuxoid.jpg',
-        timeAgo: '25 min ago'
-      },
-      title: 'What is a difference between Java nad JavaScript?',
-      content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Bibendum vitae etiam lectus amet enim.',
-      tags: ['java', 'javascript', 'wtf'],
-      stats: {
-        views: 125,
-        comments: 15,
-        upvotes: 155
-      },
-      comments: [
-        {
-          id: 1,
-          author: {
-            name: '@unkind',
-            avatar: '/avatars/unkind.jpg',
-            timeAgo: '12 November 2020 19:35'
-          },
-          content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          code: 'package main'
-        }
-      ]
-    }
-  ]
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-white">Loading questions...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -155,14 +150,8 @@ const Questions = () => {
             <div className="bg-gray-900 rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <Image
-                      src={question.author.avatar}
-                      alt={question.author.name}
-                      width={40}
-                      height={40}
-                      className="object-cover"
-                    />
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-700">
+                    <VscAccount className="w-6 h-6 text-gray-300" />
                   </div>
                   <div>
                     <h3 className="text-white font-medium">{question.author.name}</h3>
@@ -218,14 +207,8 @@ const Questions = () => {
                   <div key={comment.id} className="bg-gray-800 rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden">
-                          <Image
-                            src={comment.author.avatar}
-                            alt={comment.author.name}
-                            width={32}
-                            height={32}
-                            className="object-cover"
-                          />
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-700">
+                          <VscAccount className="w-6 h-6 text-gray-300" />
                         </div>
                         <div>
                           <span className="text-white">{comment.author.name}</span>

@@ -84,7 +84,7 @@ public class TopicoController {
 
     // Otros métodos del controlador
     @GetMapping
-    public ResponseEntity<Page<DatosListadoTopicos>> listadoMedicos(@PageableDefault(size = 2) Pageable paginacion) {
+    public ResponseEntity<Page<DatosListadoTopicos>> listadoMedicos(@PageableDefault Pageable paginacion) {
         return ResponseEntity.ok(topicoRepository.findByStatusTrue(paginacion).map(DatosListadoTopicos::new));
     }
 
