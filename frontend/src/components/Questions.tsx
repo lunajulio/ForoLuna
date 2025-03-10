@@ -1,14 +1,15 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { api } from '@/services/api'
 import { BsEye } from 'react-icons/bs'
 import { FaRegCommentAlt } from 'react-icons/fa'
 import { GoArrowUp } from 'react-icons/go'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { VscAccount } from "react-icons/vsc";
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-
+import { topicService } from '@/services/topicService'
 
 // Interfaces
 interface Comment {
@@ -59,10 +60,31 @@ interface TopicFromBackend {
 const Questions = () => {
   const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState<{type: 'question' | 'comment', id: number} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<string>('');
 
   useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+
+    if (storedUserName) {
+      setCurrentUser(storedUserName);
+    }
+
     fetchQuestions();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const fetchQuestions = async () => {
@@ -103,10 +125,8 @@ const Questions = () => {
   const formatTimeAgo = (dateString: string) => {
     try {
       const date = parseISO(dateString);
-      return formatDistanceToNow(date, { 
-        addSuffix: true,
-        locale: es 
-      });
+      // Formatear la fecha con hora en español
+      return format(date, "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es });
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'fecha desconocida';
@@ -124,6 +144,27 @@ const Questions = () => {
       </div>
     );
   }
+
+  const handleDeleteItem = async () => {
+    if (!isMenuOpen) return;
+  
+    try {
+      
+      await topicService.deleteTopic(isMenuOpen.id);
+      
+      setQuestions(questions.filter(q => q.id !== isMenuOpen.id));
+      setIsMenuOpen(null);
+  
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+    }
+  };
+
+  const handleUpdateItem = () => {
+    // Lógica para actualizar la pregunta o comentario
+    console.log('Actualizando:', isMenuOpen);
+    setIsMenuOpen(null);
+  };
 
   return (
     <div className="space-y-4">
@@ -146,7 +187,7 @@ const Questions = () => {
       {/* Lista de preguntas */}
       <div className="space-y-4">
         {questions.map((question) => (
-          <div key={question.id}>
+          <div key={question.id} className='relative'>
             <div className="bg-gray-900 rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
@@ -158,9 +199,15 @@ const Questions = () => {
                     <p className="text-gray-400 text-sm">{question.author.timeAgo}</p>
                   </div>
                 </div>
-                <button className="text-gray-400 hover:text-gray-300">
-                  <SlOptionsVertical />
-                </button>
+                {/* Mostrar opciones solo si el autor es el usuario actual */}
+                {question.author.name === currentUser && (
+                  <button 
+                    onClick={() => setIsMenuOpen({type: 'question', id: question.id})}
+                    className="text-gray-400 hover:text-gray-300"
+                  >
+                    <SlOptionsVertical />
+                  </button>
+                )}
               </div>
 
               <div className="mt-3">
@@ -215,9 +262,14 @@ const Questions = () => {
                           <p className="text-gray-400 text-sm">{comment.author.timeAgo}</p>
                         </div>
                       </div>
-                      <button className="text-gray-400 hover:text-gray-300">
-                        <SlOptionsVertical />
-                      </button>
+                      {comment.author.name === currentUser && (
+                          <button 
+                            onClick={() => setIsMenuOpen({type: 'comment', id: comment.id})}
+                            className="text-gray-400 hover:text-gray-300"
+                          >
+                            <SlOptionsVertical />
+                          </button>
+                      )}
                     </div>
 
                     <p className="mt-3 text-gray-300">{comment.content}</p>
@@ -249,6 +301,28 @@ const Questions = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+
+            {/* Menú desplegable */}
+            {isMenuOpen && isMenuOpen.id === question.id && (
+              <div 
+                ref={menuRef}
+                className="absolute right-0 top-0 mt-0 w-48 bg-white rounded-md shadow-lg py-1 border z-10"
+              >
+                <button 
+                  onClick={handleDeleteItem}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Delete
+                </button>
+                <button 
+                  onClick={handleUpdateItem}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Update
+                </button>
               </div>
             )}
           </div>

@@ -88,7 +88,7 @@ public class TopicoController {
         return ResponseEntity.ok(topicoRepository.findByStatusTrue(paginacion).map(DatosListadoTopicos::new));
     }
 
-    @PutMapping
+    @PutMapping("/id")
     @Transactional
     public ResponseEntity actualizarTopico(@RequestBody @Valid DatosActualizarTopico datosActualizarTopico) {
         Topico topico = topicoRepository.getReferenceById(datosActualizarTopico.id());

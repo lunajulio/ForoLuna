@@ -1,6 +1,6 @@
 const Sidebar = () => {
     return (
-      <div className="space-y-6">
+      <div className="sticky top-20 h-[calc(100vh-5rem)]">
         <div>
           <input
             type="search"
@@ -9,8 +9,8 @@ const Sidebar = () => {
           />
         </div>
   
-        <nav className="space-y-1">
-          <div className="text-gray-400 px-3 text-sm font-medium">MENU</div>
+        <nav className="space-y-1 mt-4">
+          <div className="text-gray-400  px-3 text-sm font-medium">MENU</div>
           <a href="#" className="flex items-center px-3 py-2 text-white hover:bg-gray-800 rounded-md">
             Questions
           </a>

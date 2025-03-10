@@ -1,6 +1,6 @@
 const RightSidebar = () => {
     return (
-      <div className="space-y-6">
+      <div className="sticky top-20 h-[calc(100vh-5rem)]">
         <div>
           <h3 className="text-white font-medium mb-3">Must-read posts</h3>
           <div className="space-y-2">
