@@ -4,8 +4,6 @@ interface DatosActualizarTopico {
   id: number;
   titulo?: string;
   mensaje?: string;
-  cursoNombre?: string;
-  cursoCategoría?: string;
 }
 
 export const topicService = {

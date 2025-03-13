@@ -88,9 +88,14 @@ public class TopicoController {
         return ResponseEntity.ok(topicoRepository.findByStatusTrue(paginacion).map(DatosListadoTopicos::new));
     }
 
-    @PutMapping("/id")
+    @PutMapping("/{id}")
     @Transactional
     public ResponseEntity actualizarTopico(@RequestBody @Valid DatosActualizarTopico datosActualizarTopico) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("ID del cuerpo: " + datosActualizarTopico.id());
+        System.out.println("Usuario autenticado: " + authentication.getName());
+        System.out.println("Autoridades: " + authentication.getAuthorities());
+    
         Topico topico = topicoRepository.getReferenceById(datosActualizarTopico.id());
         topico.actualizarTopico(datosActualizarTopico);
         return ResponseEntity.ok(new DatosRespuestaTopico(

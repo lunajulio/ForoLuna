@@ -55,6 +55,7 @@ public class SecurityConfigurations {
                                 .requestMatchers(HttpMethod.POST, "/topico").hasRole("USER")
                                 .requestMatchers(HttpMethod.GET, "/topico").hasRole("USER")
                                 .requestMatchers(HttpMethod.DELETE, "/topico/{id}").hasRole("USER")
+                                .requestMatchers(HttpMethod.PUT, "/topico/{id}").hasRole("USER")
                                 
                                 .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
