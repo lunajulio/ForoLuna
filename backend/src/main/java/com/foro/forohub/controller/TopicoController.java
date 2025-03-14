@@ -2,6 +2,10 @@ package com.foro.forohub.controller;
 
 import com.foro.forohub.domain.curso.Curso;
 import com.foro.forohub.domain.curso.CursoRepository;
+import com.foro.forohub.domain.respuesta.DatosRespuestaRespuesta;
+import com.foro.forohub.domain.respuesta.DatosSubirRespuesta;
+import com.foro.forohub.domain.respuesta.Respuesta;
+import com.foro.forohub.domain.respuesta.RespuestaRepository;
 import com.foro.forohub.domain.usuarios.Usuario;
 import com.foro.forohub.domain.usuarios.UsuarioRepository;
 import com.foro.forohub.domain.curso.DatosCurso;
@@ -19,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.foro.forohub.infra.security.RespuestasService;
 
 import java.net.URI;
 import java.util.Optional;
@@ -32,10 +37,16 @@ public class TopicoController {
     private TopicoRepository topicoRepository;
 
     @Autowired
+    private RespuestaRepository respuestaRepository;
+
+    @Autowired
     private CursoRepository cursoRepository;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private RespuestasService respuestaService;
 
     @PostMapping
     public ResponseEntity<DatosRespuestaTopico> subirTopico(@RequestBody @Valid DatosSubirTopico datosSubirTopico, UriComponentsBuilder uriComponentsBuilder) {
@@ -80,6 +91,19 @@ public class TopicoController {
 
         URI url = uriComponentsBuilder.path("/topico/{id}").buildAndExpand(topico.getId()).toUri();
         return ResponseEntity.created(url).body(datosRespuestaTopico);
+    }
+
+    @PostMapping("/{topicoId}/respuestas")
+    @Transactional
+    public ResponseEntity<DatosRespuestaRespuesta> agregarRespuesta(
+            @PathVariable Long topicoId,
+            @RequestBody @Valid DatosSubirRespuesta datosRespuesta
+    ) {
+        Respuesta respuesta = respuestaService.registrarRespuesta(
+                new DatosSubirRespuesta(datosRespuesta.contenido(), topicoId)
+        );
+
+        return ResponseEntity.ok(new DatosRespuestaRespuesta(respuesta));
     }
 
     // Otros métodos del controlador
