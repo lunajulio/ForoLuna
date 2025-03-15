@@ -24,6 +24,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.foro.forohub.infra.security.RespuestasService;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import jakarta.persistence.EntityNotFoundException;
+
 
 import java.net.URI;
 import java.util.Optional;
@@ -104,11 +110,34 @@ public class TopicoController {
         return ResponseEntity.ok(new DatosRespuestaRespuesta(respuesta));
     }
 
-    // Otros métodos del controlador
-    @GetMapping
-    public ResponseEntity<Page<DatosListadoTopicos>> listadoMedicos(@PageableDefault Pageable paginacion) {
-        return ResponseEntity.ok(topicoRepository.findByStatusTrue(paginacion).map(DatosListadoTopicos::new));
+    @GetMapping("/{topicoId}/respuestas")
+    public ResponseEntity<List<DatosRespuestaRespuesta>> obtenerRespuestasDeTopico(@PathVariable Long topicoId) {
+        Topico topico = topicoRepository.findById(topicoId)
+            .orElseThrow(() -> new EntityNotFoundException("Tópico no encontrado"));
+        
+        List<DatosRespuestaRespuesta> respuestas = topico.getRespuestas().stream()
+            .map(DatosRespuestaRespuesta::new)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(respuestas);
     }
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> listadoTopicos(
+            @PageableDefault Pageable paginacion
+        ) {
+            Page<Topico> topicos = topicoRepository.findByStatusTrue(paginacion);
+            Page<DatosListadoTopicos> topicosDTO = topicos.map(DatosListadoTopicos::new);
+            
+            Map<String, Object> respuesta = new HashMap<>();
+            respuesta.put("content", topicosDTO.getContent());
+            respuesta.put("totalPages", topicosDTO.getTotalPages());
+            respuesta.put("totalElements", topicosDTO.getTotalElements());
+            respuesta.put("pageNumber", topicosDTO.getNumber());
+            respuesta.put("pageSize", topicosDTO.getSize());
+            
+            return ResponseEntity.ok(respuesta);
+        }
 
     @PutMapping("/{id}")
     @Transactional

@@ -30,21 +30,20 @@ public class Topico {
     private Boolean status;
     private String autor;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curso_id")
     private Curso curso;
 
     @OneToMany(
-            mappedBy = "topico",
-            fetch = FetchType.EAGER,
-            cascade = {CascadeType.ALL}
+        mappedBy = "topico",
+        fetch = FetchType.LAZY,
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
     )
     private List<Respuesta> respuestas = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(
-            name = "usuario_id"
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     public Topico(DatosSubirTopico datosSubirTopico, String autor, Usuario usuario){
