@@ -99,9 +99,7 @@ public class TopicoController {
             @PathVariable Long topicoId,
             @RequestBody @Valid DatosSubirRespuesta datosRespuesta
     ) {
-        Respuesta respuesta = respuestaService.registrarRespuesta(
-                new DatosSubirRespuesta(datosRespuesta.contenido(), topicoId)
-        );
+        Respuesta respuesta = respuestaService.registrarRespuesta(topicoId, datosRespuesta.contenido());
 
         return ResponseEntity.ok(new DatosRespuestaRespuesta(respuesta));
     }

@@ -27,31 +27,29 @@ public class RespuestasService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+
     @Transactional
-    public Respuesta registrarRespuesta(DatosSubirRespuesta datosSubirRespuesta) {
-        Topico topico = topicoRepository.findById(datosSubirRespuesta.topicoId())
+    public Respuesta registrarRespuesta(Long topicoId, String contenido) {
+        Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico no encontrado"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        Usuario usuario = usuarioRepository.buscarPorLogin(username)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         // Crear la respuesta
         Respuesta respuesta = new Respuesta(
-                datosSubirRespuesta.contenido(),
+                contenido,
                 topico,
                 LocalDateTime.now(),
-                obtenerUsuarioActual()
+                username,
+                usuario
         );
 
         topico.getRespuestas().add(respuesta);
 
-        // Guardar el tópico (que cascada la respuesta)
-        topicoRepository.save(topico);
-
         return respuestaRepository.save(respuesta);
     }
-
-    private String obtenerUsuarioActual() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return username;
-    }
-
 }

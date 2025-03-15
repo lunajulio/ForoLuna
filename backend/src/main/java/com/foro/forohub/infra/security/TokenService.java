@@ -45,6 +45,6 @@ public class TokenService {
     }
 
     private Instant fechaExpiracion() {
-        return LocalDateTime.now().plusHours(5).toInstant(ZoneOffset.ofHours(-3));
+        return LocalDateTime.now().plusDays(5).toInstant(ZoneOffset.ofHours(-3));
     }
 }

@@ -4,9 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record DatosSubirRespuesta(
         @NotNull
-        String contenido,
-        @NotNull
-        Long topicoId
+        String contenido
 ) {
 
 }

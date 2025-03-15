@@ -39,11 +39,12 @@ public class Respuesta {
 
     private String autor;
 
-    public Respuesta(String mensaje, Topico topico, LocalDateTime fechaCreacion, String autor) {
+    public Respuesta(String mensaje, Topico topico, LocalDateTime fechaCreacion, String autor, Usuario usuario) {
         this.mensaje = mensaje;
         this.topico = topico;
         this.fechaCreacion = fechaCreacion;
         this.autor = autor;
+        this.usuario = usuario;
     }
 
     public Long getId() {
