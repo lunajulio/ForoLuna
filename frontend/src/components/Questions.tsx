@@ -24,6 +24,8 @@ const Questions = () => {
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null);
+  const [newCommentText, setNewCommentText] = useState<string>('');
+  const [sendingComment, setSendingComment] = useState<boolean>(false);
 
   useEffect(() => {
     const storedUserName = localStorage.getItem('userName');
@@ -103,6 +105,8 @@ const Questions = () => {
     }
   };
 
+
+
   const formatTimeAgo = (dateString: string) => {
     try {
       const date = parseISO(dateString);
@@ -152,6 +156,56 @@ const Questions = () => {
     }
 
     setIsMenuOpen(null);
+  };
+
+  const handleAddComment = async (questionId: number) => {
+    if (!newCommentText.trim()) return;
+    
+    try {
+      setSendingComment(true);
+      
+      // Formato que espera el backend
+      const commentData = {
+        contenido: newCommentText
+      };
+      
+      // Enviar al backend
+      const response = await api.post(`/topico/${questionId}/respuestas`, commentData);
+      
+      console.log('Respuesta del servidor:', response.data);
+      
+      // Crear el nuevo comentario con los datos de la respuesta o con datos locales
+      const newComment: Comment = {
+        id: response.data.id || -Date.now(), // Usar ID del backend o un ID temporal negativo
+        author: {
+          name: currentUser,
+          timeAgo: 'Ahora mismo'
+        },
+        content: newCommentText
+      };
+      
+      // Actualizar el estado local para incluir el nuevo comentario
+      setQuestions(questions.map(q => {
+        if (q.id === questionId) {
+          return {
+            ...q,
+            comments: [...q.comments, newComment],
+            stats: {
+              ...q.stats,
+              comments: q.stats.comments + 1
+            }
+          };
+        }
+        return q;
+      }));
+      
+      // Limpiar el input
+      setNewCommentText('');
+    } catch (error) {
+      console.error('Error al añadir comentario:', error);
+    } finally {
+      setSendingComment(false);
+    }
   };
 
   return (
@@ -296,6 +350,8 @@ const Questions = () => {
                     <div className="mt-4">
                       <input
                         type="text"
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
                         placeholder="Type here your wise suggestion"
                         className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white placeholder-gray-400"
                       />
@@ -306,8 +362,16 @@ const Questions = () => {
                         >
                           Cancel
                         </button>
-                        <button className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600">
-                          Suggest
+                        <button 
+                          onClick={() => handleAddComment(question.id)}
+                          disabled={sendingComment || !newCommentText.trim()}
+                          className={`px-4 py-2 text-white rounded-md ${
+                            sendingComment || !newCommentText.trim() 
+                              ? 'bg-gray-500' 
+                              : 'bg-orange-500 hover:bg-orange-600'
+                          }`}
+                        >
+                          {sendingComment ? 'Enviando...' : 'Suggest'}
                         </button>
                       </div>
                     </div>
