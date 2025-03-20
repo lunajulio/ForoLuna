@@ -31,7 +31,7 @@ El proyecto se divide en dos partes principales:
 
 
 ## Arquitectura General de la Aplicación
-![model](./arquitectura.png)
+![model](./architecture.png)
 
  
 
