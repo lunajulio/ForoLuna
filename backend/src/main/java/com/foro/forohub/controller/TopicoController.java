@@ -69,11 +69,18 @@ public class TopicoController {
         Usuario usuario = usuarioRepository.buscarPorLogin(nombreAutor)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Buscar el curso en la base de datos
-        Optional<Curso> cursoExistente = cursoRepository.findByNombreAndCategoria(datosSubirTopico.curso().getNombre(), datosSubirTopico.curso().getCategoria());
-
+        Optional<Curso> cursoExistente = cursoRepository.findByNombreAndCategoria(
+                datosSubirTopico.curso().getNombre(), 
+                datosSubirTopico.curso().getCategoria()
+        );
+            
         Curso curso;
-        curso = cursoExistente.orElseGet(datosSubirTopico::curso);
+        if (cursoExistente.isPresent()) {
+                curso = cursoExistente.get();
+        } else {
+                curso = datosSubirTopico.curso();
+                curso = cursoRepository.save(curso); 
+        }
 
         // Crear el tópico con el nombre del usuario autenticado como autor
         Topico topico = new Topico(datosSubirTopico, nombreAutor, usuario);

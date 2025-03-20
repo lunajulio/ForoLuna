@@ -26,6 +26,11 @@ const Questions = () => {
   const [questionToEdit, setQuestionToEdit] = useState<Question | null>(null);
   const [newCommentText, setNewCommentText] = useState<string>('');
   const [sendingComment, setSendingComment] = useState<boolean>(false);
+  // Estado para manejar la paginación de tópicos (preguntas)
+  const [currentPage, setCurrentPage] = useState<number>(0); // 0-indexed para backend
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalElements, setTotalElements] = useState<number>(0);
+  const TOPICS_PER_PAGE = 5; // Tópicos por página
 
   useEffect(() => {
     const storedUserName = localStorage.getItem('userName');
@@ -34,7 +39,7 @@ const Questions = () => {
       setCurrentUser(storedUserName);
     }
 
-    fetchQuestions();
+    fetchQuestions(0);
 
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -49,9 +54,14 @@ const Questions = () => {
     };
   }, []);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (page: number = 0) => {
     try {
-      const response = await api.get('/topico');
+
+      setLoading(true);
+      const response = await api.get(`/topico?page=${page}&size=${TOPICS_PER_PAGE}`);
+      setCurrentPage(response.data.pageNumber);
+      setTotalPages(response.data.totalPages);
+      setTotalElements(response.data.totalElements);
       
       const questions: Question[] = response.data.content.map((topic: TopicFromBackend): Question => ({
         id: topic.id,
@@ -134,12 +144,22 @@ const Questions = () => {
     if (!isMenuOpen) return;
   
     try {
-      
       await topicService.deleteTopic(isMenuOpen.id);
       
-      setQuestions(questions.filter(q => q.id !== isMenuOpen.id));
+      // Verificar si era el último elemento de la página
+      if (questions.length === 1 && currentPage > 0) {
+        // Si es el último elemento y no estamos en la primera página, 
+        // volver a la página anterior
+        const newPage = currentPage - 1;
+        setCurrentPage(newPage);
+        await fetchQuestions(newPage);
+      } else {
+        // Si no es el último elemento o estamos en la primera página,
+        // simplemente refrescar la página actual
+        await fetchQuestions(currentPage);
+      }
+      
       setIsMenuOpen(null);
-  
     } catch (error) {
       console.error('Error al eliminar:', error);
     }
@@ -219,6 +239,7 @@ const Questions = () => {
             setQuestions(questions.map(q => 
               q.id === updatedQuestion.id ? updatedQuestion : q
             ));
+            fetchQuestions(currentPage);
             setIsEditing(false);
             setQuestionToEdit(null);
           }}
@@ -401,6 +422,84 @@ const Questions = () => {
                 )}
               </div>
             ))}
+
+            {/* Después de la lista de preguntas */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-8">
+                <nav className="flex items-center space-x-2">
+                  <button
+                    onClick={() => fetchQuestions(currentPage - 1)}
+                    disabled={currentPage === 0}
+                    className={`px-4 py-2 rounded-md ${
+                      currentPage === 0
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    Anterior
+                  </button>
+
+                  {/* Números de página */}
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                      // Lógica para mostrar las páginas correctas
+                      let pageToShow: number;
+                      
+                      if (totalPages <= 5) {
+                        // Si hay 5 o menos páginas, mostrar todas
+                        pageToShow = i;
+                      } else if (currentPage < 3) {
+                        // Si estamos al inicio, mostrar las primeras 5
+                        pageToShow = i;
+                      } else if (currentPage > totalPages - 3) {
+                        // Si estamos al final, mostrar las últimas 5
+                        pageToShow = totalPages - 5 + i;
+                      } else {
+                        // Si estamos en medio, mostrar 2 antes y 2 después
+                        pageToShow = currentPage - 2 + i;
+                      }
+                      
+                      // Solo mostrar botones para páginas válidas
+                      if (pageToShow >= 0 && pageToShow < totalPages) {
+                        return (
+                          <button
+                            key={`page-${pageToShow}`}
+                            onClick={() => fetchQuestions(pageToShow)}
+                            className={`w-10 h-10 flex items-center justify-center rounded-md ${
+                              currentPage === pageToShow
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                            }`}
+                          >
+                            {pageToShow + 1} {/* +1 para mostrar número de página desde 1 */}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => fetchQuestions(currentPage + 1)}
+                    disabled={currentPage >= totalPages - 1}
+                    className={`px-4 py-2 rounded-md ${
+                      currentPage >= totalPages - 1
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    Siguiente
+                  </button>
+                </nav>
+              </div>
+            )}
+
+            {/* Información de paginación */}
+            {totalElements > 0 && (
+              <div className="text-center mt-3 text-sm text-gray-400">
+                Mostrando {currentPage * TOPICS_PER_PAGE + 1} - {Math.min((currentPage + 1) * TOPICS_PER_PAGE, totalElements)} de {totalElements} tópicos
+              </div>
+            )}
           </div>
         </>
       )}
