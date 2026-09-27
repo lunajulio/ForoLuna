@@ -13,6 +13,9 @@ services:
       TZ: ${TZ:-America/Bogota}
     # Ajustes para servidores pequeños (1 GB de RAM)
     command: --performance-schema=OFF --innodb-buffer-pool-size=64M
+    # Solo accesible desde el propio servidor (para túneles SSH / Workbench), nunca desde Internet
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
