@@ -1,0 +1,3 @@
+# Scripts que se ejecutan en Linux (servidor y GitHub Actions): siempre con finales LF
+*.sh text eol=lf
+backend/mvnw text eol=lf

@@ -1,0 +1,139 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  # Permite lanzar un despliegue a mano desde la pestaña Actions
+  workflow_dispatch:
+
+# En pull requests, un push nuevo cancela la ejecución anterior.
+# En master nunca se cancela, para no cortar un despliegue a medias.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # ─────────────────────────── CI: Backend ───────────────────────────
+  backend:
+    name: Backend · tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Ejecutar tests (JUnit + cobertura JaCoCo)
+        run: ./mvnw -B test
+
+      - name: Publicar informe de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-backend
+          path: backend/target/site/jacoco/
+          if-no-files-found: ignore
+
+  # ─────────────────────────── CI: Frontend ──────────────────────────
+  frontend:
+    name: Frontend · lint y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - name: Build de producción (incluye chequeo de tipos)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: /api
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  # ─────────────────────────── CD: Despliegue ────────────────────────
+  deploy:
+    name: Desplegar en EC2
+    # Solo despliega cuando CI pasa y el cambio llega a master (no en pull requests)
+    needs: [backend, frontend]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.DOMAIN }}
+    # Nunca cancelar un despliegue a medias
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      id-token: write   # necesario para autenticarse en AWS con OIDC
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Credenciales de AWS (OIDC, sin claves guardadas)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Abrir SSH solo para la IP de este runner
+        id: ip
+        run: |
+          IP=$(curl -fsS https://checkip.amazonaws.com)
+          echo "ip=$IP" >> "$GITHUB_OUTPUT"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "${{ vars.AWS_SG_ID }}" \
+            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=$IP/32,Description=github-actions-deploy}]"
+
+      - name: Preparar llave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # La regla del security group tarda unos segundos en aplicarse
+          for _ in $(seq 1 10); do
+            ssh-keyscan -T 5 -H "${{ vars.EC2_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null && break
+            sleep 3
+          done
+
+      - name: Desplegar
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ vars.EC2_HOST }} \
+            "cd ~/ForoLuna && git fetch --quiet origin master && git reset --hard ${{ github.sha }} && bash scripts/deploy.sh ${{ github.sha }}"
+
+      - name: Verificar que la app responde
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null "https://${{ vars.DOMAIN }}/" \
+               && curl -fsS -o /dev/null "https://${{ vars.DOMAIN }}/api/v3/api-docs"; then
+              echo "✅ Frontend y backend responden"
+              exit 0
+            fi
+            echo "Esperando a que la app arranque ($i/30)..."
+            sleep 10
+          done
+          echo "❌ La app no respondió tras el despliegue"
+          exit 1
+
+      - name: Cerrar el acceso SSH del runner
+        if: always() && steps.ip.outputs.ip != ''
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id "${{ vars.AWS_SG_ID }}" \
+            --protocol tcp --port 22 --cidr "${{ steps.ip.outputs.ip }}/32"
