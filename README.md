@@ -1,4 +1,5 @@
 # Foro Luna 🌙
+[![Author](https://img.shields.io/badge/by-lunajulio-green)](https://github.com/lunajulio)
 
 ## Descripción
 
