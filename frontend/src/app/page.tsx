@@ -9,7 +9,7 @@ export default function Home() {
           Luna Community
         </h1>
         <p className="text-xl text-gray-300 mb-8">
-          Welcome to the developers community!
+          Welcome to the developers community
         </p>
       </div>
     </main>
