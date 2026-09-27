@@ -1,0 +1,14 @@
+# Caddy obtiene y renueva automáticamente el certificado HTTPS de Let's Encrypt
+{$DOMAIN} {
+	encode gzip
+
+	# /api/login -> backend:8080/login (se quita el prefijo /api)
+	handle_path /api/* {
+		reverse_proxy backend:8080
+	}
+
+	# Todo lo demás lo sirve Next.js
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

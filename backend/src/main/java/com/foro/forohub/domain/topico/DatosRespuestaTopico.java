@@ -1,21 +1,20 @@
 package com.foro.forohub.domain.topico;
 
-import com.foro.forohub.domain.curso.Curso;
 import com.foro.forohub.domain.curso.DatosCurso;
-import com.foro.forohub.domain.respuesta.Respuesta;
+import com.foro.forohub.domain.respuesta.DatosRespuestaRespuesta;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record DatosRespuestaTopico(
-        Long Id,
+        Long id,
         String titulo,
         String mensaje,
         LocalDateTime fechaCreacion,
         String autor,
         DatosCurso curso,
-        List<Respuesta> respuestas) {
-    
+        List<DatosRespuestaRespuesta> respuestas) {
+
     public DatosRespuestaTopico(Topico topico) {
         this(
             topico.getId(),
@@ -24,10 +23,10 @@ public record DatosRespuestaTopico(
             topico.getFechaCreacion(),
             topico.getAutor(),
             new DatosCurso(
-                topico.getCurso().getNombre(),    // Pasamos el nombre del curso
-                topico.getCurso().getCategoria()  // Pasamos la categoría del curso
+                topico.getCurso().getNombre(),
+                topico.getCurso().getCategoria()
             ),
-            topico.getRespuestas()
+            topico.getRespuestas().stream().map(DatosRespuestaRespuesta::new).toList()
         );
     }
 }

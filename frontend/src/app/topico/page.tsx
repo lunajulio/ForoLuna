@@ -6,13 +6,10 @@ import RightSidebar from '../../components/RightSidebar'
 import Questions from '../../components/Questions'
 import Ask from '../../components/Ask'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 
 export default function Topico(){
-  const router = useRouter();
-
   const [isAsking, setIsAsking] = useState(false);
 
   // Función que se pasa a NavMain

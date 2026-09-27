@@ -1,9 +1,9 @@
 package com.foro.forohub.domain.respuesta;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record DatosSubirRespuesta(
-        @NotNull
+        @NotBlank
         String contenido
 ) {
 

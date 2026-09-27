@@ -5,12 +5,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Optional;
+
 public interface TopicoRepository extends JpaRepository<Topico, Long> {
     // Método para verificar si ya existe un tópico con un título específico
     boolean existsByTitulo(String titulo);
 
     // Si necesitas buscar solo entre tópicos activos
     boolean existsByTituloAndStatusTrue(String titulo);
+
+    Optional<Topico> findByIdAndStatusTrue(Long id);
 
     // Otros métodos que puedas necesitar
     @Query("SELECT t FROM Topico t " +

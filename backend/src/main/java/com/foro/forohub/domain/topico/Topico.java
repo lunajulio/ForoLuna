@@ -23,7 +23,7 @@ public class Topico {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
     private String titulo;
     private String mensaje;
     private LocalDateTime fechaCreacion;
@@ -46,24 +46,28 @@ public class Topico {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    public Topico(DatosSubirTopico datosSubirTopico, String autor, Usuario usuario){
+    public Topico(DatosSubirTopico datosSubirTopico, Usuario usuario, Curso curso){
         this.titulo = datosSubirTopico.titulo();
         this.mensaje = datosSubirTopico.mensaje();
-        this.fechaCreacion = datosSubirTopico.fechaCreacion();
+        this.fechaCreacion = LocalDateTime.now();
         this.status = true;
-        this.curso = datosSubirTopico.curso();
-        this.autor = autor;
+        this.curso = curso;
+        this.autor = usuario.getLogin();
         this.usuario = usuario;
     }
 
     public void actualizarTopico(DatosActualizarTopico datosActualizarTopico){
 
-        if (datosActualizarTopico.titulo() != null)
+        if (datosActualizarTopico.titulo() != null && !datosActualizarTopico.titulo().isBlank())
             this.titulo = datosActualizarTopico.titulo();
 
-        if (datosActualizarTopico.mensaje() != null)
+        if (datosActualizarTopico.mensaje() != null && !datosActualizarTopico.mensaje().isBlank())
             this.mensaje = datosActualizarTopico.mensaje();
 
+    }
+
+    public boolean esAutor(String login) {
+        return this.autor != null && this.autor.equals(login);
     }
 
     public void deshabilitarTopico(){
@@ -71,11 +75,11 @@ public class Topico {
     }
 
     public Long getId() {
-        return Id;
+        return id;
     }
 
     public void setId(Long id) {
-        Id = id;
+        this.id = id;
     }
 
     public String getTitulo() {

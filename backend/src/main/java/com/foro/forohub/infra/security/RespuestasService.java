@@ -30,7 +30,7 @@ public class RespuestasService {
 
     @Transactional
     public Respuesta registrarRespuesta(Long topicoId, String contenido) {
-        Topico topico = topicoRepository.findById(topicoId)
+        Topico topico = topicoRepository.findByIdAndStatusTrue(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico no encontrado"));
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

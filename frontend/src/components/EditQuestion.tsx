@@ -1,7 +1,8 @@
 'use client'
 import React, { useState } from 'react';
 import { topicService } from '../services/topicService';
-import { Question, Comment } from '@/types/questions_comments'
+import { Question } from '@/types/questions_comments'
+import { getErrorMessage } from '@/services/api'
 
 
 
@@ -14,6 +15,7 @@ interface EditQuestionProps {
 const EditQuestion: React.FC<EditQuestionProps> = ({ question, onSave, onCancel }) => {
     const [title, setTitle] = useState(question.title);
     const [content, setContent] = useState(question.content);
+    const [error, setError] = useState('');
   
     const handleSubmit = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
@@ -21,8 +23,7 @@ const EditQuestion: React.FC<EditQuestionProps> = ({ question, onSave, onCancel 
         try {
           await topicService.updateTopic(question.id, {
             titulo: title,
-            mensaje: content,
-            id: question.id
+            mensaje: content
           });
           
           onSave({
@@ -31,13 +32,18 @@ const EditQuestion: React.FC<EditQuestionProps> = ({ question, onSave, onCancel 
             content       
           });
         } catch (error) {
-          console.error("Error al actualizar:", error);
+          setError(getErrorMessage(error, 'Error al actualizar la pregunta'));
         }
       };
   
     return (
       <div className="bg-gray-900 rounded-lg p-6">
         <h2 className="text-xl font-bold text-white mb-4">Editar pregunta</h2>
+        {error && (
+          <div className="bg-red-500 text-white p-3 rounded-md mb-4">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-white mb-2">Título</label>

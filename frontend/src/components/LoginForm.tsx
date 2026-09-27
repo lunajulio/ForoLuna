@@ -1,14 +1,14 @@
 'use client'
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { api } from '../services/api';
+import axios from 'axios';
+import { api, getErrorMessage } from '../services/api';
 import { useRouter } from 'next/navigation';
 import { DatosAutenticacionUsuario, DatosTokenJWT } from '../services/auth';
 
 const LoginForm = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<DatosAutenticacionUsuario>();
   const [isLoading, setIsLoading] = useState(false);
-  const [userName, setUserName] = useState<string>('');
   const [apiError, setApiError] = useState<string>('');
   const router = useRouter();
 
@@ -17,52 +17,26 @@ const LoginForm = () => {
       setIsLoading(true);
       setApiError('');
 
-      console.log('Intentando login con:', data);
-
       const response = await api.post<DatosTokenJWT>('/login', data);
-      
-      console.log('Respuesta del servidor:', response);
 
       if (response.data && response.data.jwTtoken) {
-        // Guardar datos en localStorage
+        // Guardar datos en localStorage (el interceptor de api.ts añade el token a cada petición)
         localStorage.setItem('token', response.data.jwTtoken);
         localStorage.setItem('userName', data.login);
-        setUserName(data.login);
-        
-        // Configurar el token para futuras peticiones
-        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwTtoken}`;
 
-        console.log('Login exitoso, preparando redirección...');
-
-        // Pequeña pausa para asegurar que los datos se guarden
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        try {
-          // Intentar redirección programática
-          await router.push('/topico');
-        } catch (navigationError) {
-          console.error('Error en la navegación programática:', navigationError);
-          // Fallback a redirección tradicional
-          window.location.href = '/topico';
-        }
+        router.push('/topico');
       } else {
-        throw new Error('No se recibió token en la respuesta');
+        setApiError('No se recibió token en la respuesta');
       }
 
-    } catch (error: any) {
-      console.error('Error completo:', error);
-      
-      if (error.response) {
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
         // Error de respuesta del servidor
-        console.error('Error de respuesta:', error.response.data);
-        setApiError(error.response.data.message || 'Error en la autenticación');
-      } else if (error.request) {
+        setApiError(getErrorMessage(error, 'Error en la autenticación'));
+      } else if (axios.isAxiosError(error) && error.request) {
         // Error de conexión
-        console.error('Error de conexión:', error.request);
         setApiError('Error de conexión con el servidor');
       } else {
-        // Otros errores
-        console.error('Error:', error.message);
         setApiError('Error inesperado');
       }
     } finally {

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { api } from '@/services/api';
+import { api, getErrorMessage } from '@/services/api';
 import { IoImageOutline } from 'react-icons/io5';
 
 // Lista predefinida de categorías
@@ -32,47 +32,34 @@ const Ask: React.FC<AskProps> = ({ onSubmit, onCancel }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
     if (!category) {
-        setError('Please select a category');
-        return;
-      }
-    
-    if (topicName.length < 3) {
-        setError('Topic name must be at least 3 characters long');
-        return;
+      setError('Please select a category');
+      return;
     }
 
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No hay token de autenticación');
-        return;
-      }
+    if (topicName.trim().length < 3) {
+      setError('Topic name must be at least 3 characters long');
+      return;
+    }
 
+    setIsLoading(true);
+    try {
       const topicoData = {
         titulo: title,
         mensaje: question,
-        fechaCreacion: new Date().toISOString(),
         curso: {
           nombre: topicName,
           categoria: category
         }
       };
 
-      console.log('Enviando datos:', topicoData);
+      await api.post('/topico', topicoData);
+      onSubmit();
 
-      const response = await api.post('/topico', topicoData);
-      
-      if (response.status === 201 || response.status === 200) {
-        onSubmit();
-      }
-
-    } catch (error: any) {
-      console.error('Error al crear tópico:', error);
-      setError(error.response?.data?.message || 'Error al crear el tópico');
+    } catch (error) {
+      setError(getErrorMessage(error, 'Error al crear el tópico'));
     } finally {
       setIsLoading(false);
     }

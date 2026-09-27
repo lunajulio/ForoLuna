@@ -1,19 +1,28 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
-import { api } from '@/services/api'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { api, getErrorMessage } from '@/services/api'
 import { BsEye } from 'react-icons/bs'
 import { FaRegCommentAlt } from 'react-icons/fa'
 import { GoArrowUp } from 'react-icons/go'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { VscAccount } from "react-icons/vsc";
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { topicService } from '@/services/topicService'
 import EditQuestion from './EditQuestion'
 import { Question, Comment, TopicFromBackend, CommentFromBackend } from '@/types/questions_comments'
 
-// Interfaces
+const TOPICS_PER_PAGE = 5; // Tópicos por página
+
+const formatTimeAgo = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    // Formatear la fecha con hora en español
+    return format(date, "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es });
+  } catch {
+    return 'fecha desconocida';
+  }
+};
 
 const Questions = () => {
   const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
@@ -30,34 +39,12 @@ const Questions = () => {
   const [currentPage, setCurrentPage] = useState<number>(0); // 0-indexed para backend
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalElements, setTotalElements] = useState<number>(0);
-  const TOPICS_PER_PAGE = 5; // Tópicos por página
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  useEffect(() => {
-    const storedUserName = localStorage.getItem('userName');
-
-    if (storedUserName) {
-      setCurrentUser(storedUserName);
-    }
-
-    fetchQuestions(0);
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const fetchQuestions = async (page: number = 0) => {
+  const fetchQuestions = useCallback(async (page: number = 0) => {
     try {
-
       setLoading(true);
+      setErrorMessage('');
       const response = await api.get(`/topico?page=${page}&size=${TOPICS_PER_PAGE}`);
       setCurrentPage(response.data.pageNumber);
       setTotalPages(response.data.totalPages);
@@ -85,10 +72,7 @@ const Questions = () => {
         questions.map(async (question): Promise<Question> => {
           try {
             const commentsResponse = await api.get<CommentFromBackend[]>(`/topico/${question.id}/respuestas`);
-            
-            // Log para depuración
-            console.log(`Comentarios para el tópico ${question.id}:`, commentsResponse.data);
-  
+
             return {
               ...question,
               comments: commentsResponse.data.map((comment, index): Comment => ({
@@ -100,8 +84,8 @@ const Questions = () => {
                 content: comment.contenido
               }))
             };
-          } catch (error) {
-            console.error(`Error fetching comments for topic ${question.id}:`, error);
+          } catch {
+            // Si fallan los comentarios de un tópico, se muestra igual sin ellos
             return question;
           }
         })
@@ -109,24 +93,33 @@ const Questions = () => {
   
       setQuestions(questionsWithComments);
     } catch (error) {
-      console.error('Error fetching questions:', error);
+      setErrorMessage(getErrorMessage(error, 'No se pudieron cargar las preguntas'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
 
-
-  const formatTimeAgo = (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      // Formatear la fecha con hora en español
-      return format(date, "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'fecha desconocida';
+    if (storedUserName) {
+      setCurrentUser(storedUserName);
     }
-  };
+
+    fetchQuestions(0);
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [fetchQuestions]);
 
   const toggleComments = (questionId: number) => {
     setExpandedQuestionId(expandedQuestionId === questionId ? null : questionId);
@@ -161,7 +154,8 @@ const Questions = () => {
       
       setIsMenuOpen(null);
     } catch (error) {
-      console.error('Error al eliminar:', error);
+      setIsMenuOpen(null);
+      setErrorMessage(getErrorMessage(error, 'No se pudo eliminar la pregunta'));
     }
   };
 
@@ -183,6 +177,7 @@ const Questions = () => {
     
     try {
       setSendingComment(true);
+      setErrorMessage('');
       
       // Formato que espera el backend
       const commentData = {
@@ -191,8 +186,6 @@ const Questions = () => {
       
       // Enviar al backend
       const response = await api.post(`/topico/${questionId}/respuestas`, commentData);
-      
-      console.log('Respuesta del servidor:', response.data);
       
       // Crear el nuevo comentario con los datos de la respuesta o con datos locales
       const newComment: Comment = {
@@ -222,7 +215,7 @@ const Questions = () => {
       // Limpiar el input
       setNewCommentText('');
     } catch (error) {
-      console.error('Error al añadir comentario:', error);
+      setErrorMessage(getErrorMessage(error, 'No se pudo enviar el comentario'));
     } finally {
       setSendingComment(false);
     }
@@ -230,6 +223,12 @@ const Questions = () => {
 
   return (
     <div className="space-y-4">
+      {errorMessage && (
+        <div className="bg-red-500 text-white p-3 rounded-md">
+          {errorMessage}
+        </div>
+      )}
+
       {/* Mostrar el formulario de edición si estamos en modo edición */}
       {isEditing && questionToEdit && (
         <EditQuestion 

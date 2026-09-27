@@ -21,7 +21,7 @@ public class Respuesta {
 
     @jakarta.persistence.Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
     private String mensaje;
 
     @ManyToOne
@@ -48,11 +48,11 @@ public class Respuesta {
     }
 
     public Long getId() {
-        return Id;
+        return id;
     }
 
     public void setId(Long id) {
-        Id = id;
+        this.id = id;
     }
 
     public String getMensaje() {

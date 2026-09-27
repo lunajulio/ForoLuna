@@ -1,7 +1,6 @@
 import { api } from './api';
 
 interface DatosActualizarTopico {
-  id: number;
   titulo?: string;
   mensaje?: string;
 }
@@ -9,23 +8,13 @@ interface DatosActualizarTopico {
 export const topicService = {
   // Actualizar tópico
   updateTopic: async (id: number, data: DatosActualizarTopico) => {
-    try {
-      const response = await api.put(`/topico/${id}`, data);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating topic:', error);
-      throw error;
-    }
+    const response = await api.put(`/topico/${id}`, data);
+    return response.data;
   },
 
   // Eliminar tópico (eliminación lógica)
   deleteTopic: async (id: number) => {
-    try {
-      const response = await api.delete(`/topico/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting topic:', error);
-      throw error;
-    }
+    const response = await api.delete(`/topico/${id}`);
+    return response.data;
   }
 };

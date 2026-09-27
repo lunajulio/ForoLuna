@@ -1,0 +1,5 @@
+# Secretos de despliegue
+.env
+
+# Salida de compilación en la raíz
+/target/

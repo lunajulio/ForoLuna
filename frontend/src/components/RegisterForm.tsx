@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { api } from '../services/api';
+import { api, getErrorMessage } from '../services/api';
 import { useRouter } from 'next/navigation';
 
 interface FormData {
@@ -30,26 +30,16 @@ const RegisterForm = () => {
         return;
       }
 
-      // Log para debug
-      console.log('Datos a enviar:', {
+      await api.post('/usuarios', {
         nombre: data.nombre,
         login: data.login,
         clave: data.password
       });
 
-
-      const response = await api.post('/usuarios', {
-        nombre: data.nombre,
-        login: data.login,
-        clave: data.password
-      });
-      
-      console.log('Respuesta:', response.data);
       router.push('/login');
 
-    } catch (error: any) {
-      console.error('Error completo:', error);
-      setApiError(error.response?.data || 'Error al registrar usuario');
+    } catch (error) {
+      setApiError(getErrorMessage(error, 'Error al registrar usuario'));
     } finally {
       setIsLoading(false);
     }
