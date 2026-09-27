@@ -69,9 +69,10 @@ jobs:
   # ─────────────────────────── CD: Despliegue ────────────────────────
   deploy:
     name: Desplegar en EC2
-    # Solo despliega cuando CI pasa y el cambio llega a master (no en pull requests)
+    # Solo despliega cuando CI pasa, el cambio llega a master (no en pull requests)
+    # y hay un servidor configurado: sin la variable EC2_HOST el despliegue se omite
     needs: [backend, frontend]
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master' && vars.EC2_HOST != ''
     runs-on: ubuntu-latest
     environment:
       name: production
