@@ -40,6 +40,7 @@ public class Topico {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
+    @OrderBy("id ASC")
     private List<Respuesta> respuestas = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
